@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Girish Ka Jadu — AI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#070812;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:900px;margin:auto;min-height:100vh;padding:18px}.head{text-align:center;padding:18px 0}
+.logo{font-size:34px;font-weight:900;background:linear-gradient(90deg,#8b5cf6,#22d3ee,#ec4899);-webkit-background-clip:text;color:transparent}
+.sub{color:#aeb4ca}.card{background:#101323;border:1px solid #252b44;border-radius:24px;overflow:hidden;box-shadow:0 20px 70px #0008}
+.tabs{display:flex;gap:8px;padding:10px;border-bottom:1px solid #252b44}.tab{flex:1;border:0;border-radius:13px;padding:12px;background:#181c30;color:#ccd2e7;font-weight:800}.tab.on{background:linear-gradient(135deg,#7655ff,#06b6d4);color:white}
+.panel{display:none}.panel.on{display:block}.chat{height:58vh;min-height:380px;overflow:auto;padding:14px}.m{max-width:84%;padding:12px 15px;border-radius:17px;margin:10px 0;line-height:1.5;white-space:pre-wrap}.u{margin-left:auto;background:linear-gradient(135deg,#694cf6,#078cc5)}.a{background:#1a2034;border:1px solid #2c3555}
+.composer{display:flex;gap:8px;padding:12px;border-top:1px solid #252b44}.composer textarea{flex:1;min-height:52px;max-height:150px}.input{width:100%;padding:13px;border-radius:14px;border:1px solid #303750;background:#0a0d19;color:#fff;outline:none}textarea{resize:vertical}.btn{border:0;border-radius:14px;padding:12px 16px;background:#7655ff;color:#fff;font-weight:800;cursor:pointer}.send{width:58px;font-size:20px}.magic{padding:20px}.magic textarea{min-height:100px}.status{font-size:12px;color:#8790aa;padding:0 14px 10px}.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}.gallery img{width:100%;border-radius:16px;border:1px solid #303750}.error{color:#ff9a9a}.hint{color:#9da5bc;font-size:13px}
+@media(max-width:600px){.gallery{grid-template-columns:1fr}.wrap{padding:10px}.chat{height:56vh}.logo{font-size:29px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="head"><div class="logo">✨ Girish Ka Jadu</div><div class="sub">Real AI Chat + Image Generator</div></header>
+<div class="card">
+<div class="tabs">
+<button class="tab on" data-tab="chat">🤖 AI Chat</button>
+<button class="tab" data-tab="image">🎨 Image AI</button>
+</div>
+
+<section id="chat" class="panel on">
+<div id="chatBox" class="chat"><div class="m a">Namaste! 👋 Main <b>Girish Ka Jadu</b> hoon. Mujhse kuch bhi poochho.</div></div>
+<div id="status" class="status">Ready</div>
+<div class="composer"><textarea id="prompt" placeholder="Kuch bhi poochho..." onkeydown="enterSend(event)"></textarea><button class="btn send" onclick="sendChat()">➤</button></div>
+</section>
+
+<section id="image" class="panel">
+<div class="magic">
+<h2>🎨 Jadu Image Generator</h2>
+<p class="hint">Prompt likho aur real image generation request server ko bhejo.</p>
+<textarea id="imagePrompt" class="input" placeholder="Example: futuristic Indian city at night, cinematic, ultra detailed"></textarea>
+<br><br>
+<button class="btn" onclick="generateImage()">✨ Image Banao</button>
+<div id="imageStatus" class="status"></div>
+<div id="gallery" class="gallery"></div>
+</div>
+</section>
+</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));b.classList.add('on');$(b.dataset.tab).classList.add('on')});
+function add(text,who){const d=document.createElement('div');d.className='m '+who;d.textContent=text;$('chatBox').appendChild(d);$('chatBox').scrollTop=$('chatBox').scrollHeight}
+function enterSend(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}}
+async function sendChat(){
+ const p=$('prompt'),q=p.value.trim();if(!q)return;p.value='';add(q,'u');$('status').textContent='Girish Ka Jadu soch raha hai…';
+ try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Request failed');add(j.reply,'a');$('status').textContent='Ready'}
+ catch(e){add('⚠️ '+e.message,'a');$('status').textContent='Connection error'}
+}
+async function generateImage(){
+ const q=$('imagePrompt').value.trim();if(!q)return;
+ $('imageStatus').textContent='Image ban rahi hai…';$('gallery').innerHTML='';
+ try{const r=await fetch('/api/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:q})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Image request failed');
+ (j.images||[]).forEach(src=>{const img=document.createElement('img');img.src=src;$('gallery').appendChild(img)});
+ $('imageStatus').textContent='Done ✨';
+ }catch(e){$('imageStatus').innerHTML='<span class="error">⚠️ '+e.message+'</span>'}
+}
+</script>
+</body></html>
